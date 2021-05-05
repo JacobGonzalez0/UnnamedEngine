@@ -50,6 +50,16 @@ class Renderer{
         this.context = canvas.getContext("2d")
     }
 
+}
+
+class TextBox{
+
+    constructor(){
+
+        
+
+        return this;
+    }
 
 }
 
@@ -67,6 +77,7 @@ class Main{
         this.lastFpsUpdate = 0;
         this.lastFrameTimeMs = 0;
         this.debugFlag = false;
+        this.objMemory = new Map();
 
         this.renderer =  new Renderer("screen");
         this.renderer.resize(320,200)
@@ -75,13 +86,39 @@ class Main{
 
         return this;
     }
+
+    newObj = (obj)=>{
+        let id = this.makeid(7);
+        if(this.objMemory.get(id)){
+            //try again if id is found already;
+            return this.newObj(obj);
+        }
+        //set the object in memory
+        this.objMemory.set(id, obj);
+        return id;
+    }
+
+    getObj = (id)=>{
+        if(this.objMemory.get(id)){
+            return this.objMemory.get(id);
+        }
+        return false;
+    }
+
+    delObj = (id)=>{
+        if(this.objMemory.get(id)){
+            this.objMemory.delete(id);
+            return true;
+        }
+        return false;
+    }
     
     debug = ()=>{
+        //enables the flag
         this.debugFlag = true;
         this.frameCounter =  document.createElement("div");
-        
+        //and adds the counter to the body of the page
         document.body.appendChild(this.frameCounter);
-       
     }
 
     panic = ()=>{
@@ -132,6 +169,16 @@ class Main{
         requestAnimationFrame(this.loop)
 
 
+    }
+
+    makeid(length) {
+        var result           = [];
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
+        }
+       return result.join('');
     }
 
 }
