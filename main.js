@@ -21,6 +21,38 @@ console.log("Working")
 
 */
 
+class Rectangle{
+
+    constructor(width, height, color , x , y ){
+
+        this.width = width;
+        this.height = height;
+        this.color = color || "#000";
+        this.x = x || 0;
+        this.y = y || 0;
+        this.vY = 0;
+        this.vX = 0;
+        
+    }
+
+    update(delta){
+        this.x += this.vX * delta;
+        this.y += this.vY * delta;
+    }
+
+    render(ctx){
+        ctx.fillStyle = this.color;
+
+        ctx.fillRect(
+            this.x,
+            this.y,
+            this.width,
+            this.height
+        )
+    }
+
+}
+
 class Renderer{
 
     constructor(element){
@@ -92,9 +124,13 @@ class VisualServer{
     }
 
     render(){
+        //clear screen
+        this.renderer.ctx.clearRect(0,0,
+            this.renderer.canvas.width,
+            this.renderer.canvas.height)
+
         if(this.render){
 
-            console.log(this.lists)
             this.lists.forEach( list =>{
 
                 list.objects.forEach( obj => {
@@ -102,12 +138,29 @@ class VisualServer{
                     this.memory.getObj(obj).render(this.renderer.ctx);
 
                 })
-                
-
-            })
             
+            })
+        }
+    }
 
+    update(delta){
 
+        if(this.render){
+
+            this.lists.forEach( list =>{
+
+                list.objects.forEach( obj => {
+
+                    try{
+                        this.memory.getObj(obj).update(delta);
+                    }catch(err){
+
+                    }
+                   
+
+                })
+            
+            })
         }
     }
 
@@ -157,7 +210,9 @@ class ObjectMemory{
 
 }
 
-class Main{
+
+
+class Engine{
 
     fps;
     delta;
@@ -166,7 +221,7 @@ class Main{
         this.maxFps = 60;
         this.fps = 0;
         this.delta = 0;
-        this.timeStep = 1000 / 60;
+        this.timestep = 1000 / 60;
         this.framesThisSecond = 0;
         this.lastFpsUpdate = 0;
         this.lastFrameTimeMs = 0;
@@ -183,22 +238,15 @@ class Main{
     }
 
     init(){
-        let vs = new VisualServer(this.objMemory);
-        vs.setRenderer(this.renderer);
-        vs.newList("test",1)
-        let list = vs.newList("test2",1)
-        
-        //test object
-        list.addObject({test:"test",
-        render: (ctx)=>{
-                //object can focus on its own rendering 
-                ctx.fillRect(20, 10, 150, 100);
-            }
-        })
 
-        vs.render();
+        this.vs = new VisualServer(this.objMemory);
+        this.vs.setRenderer(this.renderer);
+        
+        new Main(this);
 
         requestAnimationFrame(this.loop);
+
+        
     }
     
     debug = ()=>{
@@ -214,13 +262,15 @@ class Main{
     }
 
     update = (delta)=>{
-        
+        this.vs.update(delta)
     }
 
     draw(){
         if(this.debugFlag){
             this.frameCounter.innerHTML = "FPS: " + this.fps.toFixed(2);
         }
+
+        this.vs.render();
         
     }
 
@@ -244,9 +294,9 @@ class Main{
         this.framesThisSecond++;
 
         let numUpdateSteps = 0;
-        while(this.delta >= timestamp){
-            this.update(timestamp);
-            this.delta -= timestamp;
+        while(this.delta >= this.timestep){
+            this.update(this.timestep);
+            this.delta -= this.timestep;
             if(++numUpdateSteps >= 240){
                 this.panic();
                 break;
@@ -263,4 +313,20 @@ class Main{
 
 }
 
-new Main().debug();
+class Main{
+    
+    constructor(engine){
+        this.engine = engine;
+        let list = this.engine.vs.newList("test",1)
+
+        let player = new Rectangle(100,100, "#000", 0 ,0)
+        list.addObject(player)
+
+        player.vX = .05
+
+        console.log("main loaded")
+
+    }
+}
+
+new Engine().debug();
