@@ -52,39 +52,71 @@ class Renderer{
 
 }
 
-class TextBox{
+class ObjectList{
 
-    constructor(){
+    constructor(id, memory){
+        this.memory = memory;
+        this.objects = [];
+        this.id = id;
+    }
 
-        
-
-        return this;
+    addObject(obj){
+        let id = this.memory.newObj(obj);
+        this.objects.push(id);
     }
 
 }
 
-class Main{
+class VisualServer{
 
-    fps;
-    delta;
+    constructor(memory){
+        this.memory = memory; 
+        this.lists = new Map();
+        this.renderer = null;
+        return this;
+    }
+
+    newList(id){
+        if(this.lists.get(id) ){
+            return false;
+        }
+        
+        this.lists.set(id, new ObjectList(id, this.memory));
+        return this.lists.get(id);
+    }
+
+    setRenderer(renderer){
+        //check if renderer object is correct
+        this.renderer = renderer;
+
+    }
+
+    render(){
+        if(this.render){
+
+            console.log(this.lists)
+            this.lists.forEach( list =>{
+
+                list.objects.forEach( obj => {
+
+                    this.memory.getObj(obj).render(this.renderer.ctx);
+
+                })
+                
+
+            })
+            
+
+
+        }
+    }
+
+}
+
+class ObjectMemory{
 
     constructor(){
-        this.maxFps = 60;
-        this.fps = 0;
-        this.delta = 0;
-        this.timeStep = 1000 / 60;
-        this.framesThisSecond = 0;
-        this.lastFpsUpdate = 0;
-        this.lastFrameTimeMs = 0;
-        this.debugFlag = false;
         this.objMemory = new Map();
-
-        this.renderer =  new Renderer("screen");
-        this.renderer.resize(320,200)
-
-        requestAnimationFrame(this.loop);
-
-        return this;
     }
 
     newObj = (obj)=>{
@@ -112,6 +144,62 @@ class Main{
         }
         return false;
     }
+
+    makeid(length) {
+        var result = [];
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
+        }
+       return result.join('');
+    }
+
+}
+
+class Main{
+
+    fps;
+    delta;
+
+    constructor(){
+        this.maxFps = 60;
+        this.fps = 0;
+        this.delta = 0;
+        this.timeStep = 1000 / 60;
+        this.framesThisSecond = 0;
+        this.lastFpsUpdate = 0;
+        this.lastFrameTimeMs = 0;
+        this.debugFlag = false;
+        this.objMemory = new ObjectMemory();
+       
+
+        this.renderer =  new Renderer("screen");
+        this.renderer.resize(320,200)
+
+        
+        this.init()
+        return this;
+    }
+
+    init(){
+        let vs = new VisualServer(this.objMemory);
+        vs.setRenderer(this.renderer);
+        vs.newList("test",1)
+        let list = vs.newList("test2",1)
+        
+        //test object
+        list.addObject({test:"test",
+        render: (ctx)=>{
+                //object can focus on its own rendering 
+                ctx.fillRect(20, 10, 150, 100);
+            }
+        })
+
+        vs.render();
+
+        requestAnimationFrame(this.loop);
+    }
     
     debug = ()=>{
         //enables the flag
@@ -126,7 +214,7 @@ class Main{
     }
 
     update = (delta)=>{
-
+        
     }
 
     draw(){
@@ -171,15 +259,7 @@ class Main{
 
     }
 
-    makeid(length) {
-        var result           = [];
-        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        var charactersLength = characters.length;
-        for ( var i = 0; i < length; i++ ) {
-            result.push(characters.charAt(Math.floor(Math.random() * charactersLength)));
-        }
-       return result.join('');
-    }
+   
 
 }
 
